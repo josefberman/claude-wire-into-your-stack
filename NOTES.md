@@ -1,6 +1,16 @@
 # NOTES
 
-**Server.** Connected the official `fetch` MCP server (`uvx mcp-server-fetch`), a credential-free reference server. It's useful here because this is a small REST API — Claude can pull in live reference pages (MDN, RFCs, Express docs) to check the project's status-code and error conventions against the real spec instead of guessing. The permission rule allows only `mcp__fetch__fetch`, the single read-only tool the server exposes, rather than blanket-allowing the server.
+**Server.** Connected the official `fetch` MCP server (`uvx mcp-server-fetch`), a credential-free reference server, via `.mcp.json` at the repo root. It's useful here because this is a small REST API — Claude can pull in live reference pages (MDN, RFCs, Express docs) to check the project's status-code and error conventions against the real spec instead of guessing. The permission rule allows only `mcp__fetch__fetch`, the single read-only tool the server exposes, rather than blanket-allowing the server.
+
+Confirmed invocation (`claude -p` picking up the committed `.mcp.json`, tool restricted to `mcp__fetch__fetch`):
+
+```
+TOOL_USE: mcp__fetch__fetch {"url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/201"}
+TOOL_RESULT: [text/html content of the MDN 201 page]
+TEXT: The HTTP 201 Created status code indicates that a request has succeeded and,
+as a result, a new resource has been created (commonly the result of a POST request).
+```
+This matched an earlier check where the same server was used to confirm `POST /users` (`201` with the created user) and the `400` validation responses in `routes/users.js` line up with the MDN/RFC 9110 definitions.
 
 **Skill.** `.claude/skills/add-api-resource/` captures the repeated shape of adding a new resource to this API: store functions in `db/store.js`, a route file with validation in the route (`400`/`404`), the `{ "error": "message" }` error shape, mounting in `server.js`, matching `node:test`/`supertest` tests, and a `docs/api.md` entry. The description names concrete trigger phrases ("add a DELETE /users/:id route", "add a new products resource") and explicitly excludes editing existing route logic or unrelated Express questions, so it fires on "add a new endpoint" but not on "why does this route return 400."
 
